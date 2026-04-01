@@ -64,6 +64,12 @@ Logs:
 journalctl -u qwen3-tts -f
 ```
 
+Healthcheck script:
+
+```bash
+bash server/healthcheck_qwen3_tts.sh --host 127.0.0.1 --port 8001 --text "Hallo Welt"
+```
+
 Before enabling the unit, adjust these paths in the service file:
 
 - `/opt/xiaozhi`
