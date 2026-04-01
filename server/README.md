@@ -44,6 +44,14 @@ sudo systemctl enable --now qwen3-tts.service
 sudo systemctl status qwen3-tts.service
 ```
 
+Or use the installer script:
+
+```bash
+bash server/install_qwen3_tts.sh \
+  --repo-dir /opt/xiaozhi \
+  --venv-python /opt/qwen3-tts/.venv/bin/python
+```
+
 Health check:
 
 ```bash
@@ -62,3 +70,7 @@ Before enabling the unit, adjust these paths in the service file:
 - `/opt/qwen3-tts/.venv/bin/python`
 
 If your repo or venv lives elsewhere, replace them with your actual paths.
+
+The installer writes an optional defaults file at `/etc/default/qwen3-tts`.
+You can edit that file later to change model, task, speaker, or language without
+touching the service unit.
