@@ -22,6 +22,38 @@
 extern AppState appState;
 extern WebServer server;
 
+static bool requireWebAuth() {
+  if (strlen(WEB_UI_PASSWORD) == 0) {
+    return true;
+  }
+
+  if (server.authenticate(WEB_UI_USER, WEB_UI_PASSWORD)) {
+    return true;
+  }
+
+  server.requestAuthentication();
+  return false;
+}
+
+static String htmlEscape(const String& input) {
+  String out;
+  out.reserve(input.length() + 16);
+
+  for (size_t i = 0; i < input.length(); i++) {
+    char c = input[i];
+    switch (c) {
+      case '&': out += "&amp;"; break;
+      case '<': out += "&lt;"; break;
+      case '>': out += "&gt;"; break;
+      case '"': out += "&quot;"; break;
+      case '\'': out += "&#39;"; break;
+      default: out += c; break;
+    }
+  }
+
+  return out;
+}
+
 String htmlPage() {
   String html;
   html += R"rawliteral(
@@ -43,22 +75,22 @@ String htmlPage() {
     <h2>Xiaozhi ESP32-S3</h2>
     )rawliteral";
 
-    html += "<p><b>IP:</b> " + WiFi.localIP().toString() + "</p>";
-    html += "<p><b>SSID:</b> " + WiFi.SSID() + "</p>";
+    html += "<p><b>IP:</b> " + htmlEscape(WiFi.localIP().toString()) + "</p>";
+    html += "<p><b>SSID:</b> " + htmlEscape(WiFi.SSID()) + "</p>";
     html += "<p><b>MQTT:</b> ";
     html += mqttIsConnected() ? "verbunden" : "getrennt";
     html += "</p>";
 
     html += "<div class='box'>";
-    html += "<p><b>Assistant:</b> " + String(getAssistantModeName(appState.assistantMode)) + "</p>";
-    html += "<p><b>Volume:</b> " + String(appState.speakerVolume) + "%</p>";
-    html += "<p><b>Letzte Eingabe:</b> " + appState.lastIncomingText + "</p>";
-    html += "<p><b>Antwort:</b> " + appState.lastHaAnswer + "</p>";
-    html += "<p><b>TTS URL:</b> " + appState.lastTtsUrl + "</p>";
-    html += "<p><b>TTS Path:</b> " + appState.lastTtsPath + "</p>";
-    html += "<p><b>Mikro:</b> " + appState.lastMicInfo + "</p>";
-    html += "<p><b>Speaker:</b> " + appState.lastSpeakerInfo + "</p>";
-    html += "<p><b>Mic avg:</b> " + String(appState.currentMicAvg) + "</p>";
+    html += "<p><b>Assistant:</b> " + htmlEscape(String(getAssistantModeName(appState.assistantMode))) + "</p>";
+    html += "<p><b>Volume:</b> " + htmlEscape(String(appState.speakerVolume) + "%") + "</p>";
+    html += "<p><b>Letzte Eingabe:</b> " + htmlEscape(appState.lastIncomingText) + "</p>";
+    html += "<p><b>Antwort:</b> " + htmlEscape(appState.lastHaAnswer) + "</p>";
+    html += "<p><b>TTS URL:</b> " + htmlEscape(appState.lastTtsUrl) + "</p>";
+    html += "<p><b>TTS Path:</b> " + htmlEscape(appState.lastTtsPath) + "</p>";
+    html += "<p><b>Mikro:</b> " + htmlEscape(appState.lastMicInfo) + "</p>";
+    html += "<p><b>Speaker:</b> " + htmlEscape(appState.lastSpeakerInfo) + "</p>";
+    html += "<p><b>Mic avg:</b> " + htmlEscape(String(appState.currentMicAvg)) + "</p>";
     html += "</div>";
     html += R"rawliteral(
         <div class="box">
@@ -320,6 +352,8 @@ String htmlPage() {
 }
 
 static void handlePlayRecording() {
+  if (!requireWebAuth()) return;
+
   String err;
   bool ok = playRecordedWav(err);
 
@@ -332,6 +366,8 @@ static void handlePlayRecording() {
 }
 
 static void handleConfigGet() {
+  if (!requireWebAuth()) return;
+
   DynamicJsonDocument doc(512);
   doc["recording_silence_threshold"] = runtimeConfig.recording_silence_threshold;
   doc["recording_speech_hits_required"] = runtimeConfig.recording_speech_hits_required;
@@ -346,6 +382,8 @@ static void handleConfigGet() {
 }
 
 static void handleAssistantSet() {
+  if (!requireWebAuth()) return;
+
   String mode = server.hasArg("mode") ? server.arg("mode") : "";
   if (mode.isEmpty()) {
     server.send(400, "text/plain; charset=utf-8", "Fehler: mode fehlt");
@@ -369,6 +407,8 @@ static void handleAssistantSet() {
 }
 
 static void handleSttTest() {
+  if (!requireWebAuth()) return;
+
   String textOut, errorOut;
 
   drawLines("STT...", "lade Aufnahme hoch", "", WiFi.localIP().toString());
@@ -387,6 +427,8 @@ static void handleSttTest() {
 }
 
 static void handleAskRecording() {
+  if (!requireWebAuth()) return;
+
   String textOut, errorOut;
 
   drawLines("STT...", "lade Aufnahme hoch", "", WiFi.localIP().toString());
@@ -432,6 +474,8 @@ static void handleAskRecording() {
   server.send(200, "text/plain; charset=utf-8", msg);
 }
 static void handleConfigSet() {
+  if (!requireWebAuth()) return;
+
   runtimeConfig.recording_silence_threshold =
       server.hasArg("recording_silence_threshold") ? server.arg("recording_silence_threshold").toInt() : runtimeConfig.recording_silence_threshold;
 
@@ -459,24 +503,30 @@ static void handleConfigSet() {
 }
 
 static void handleRecStart() {
+  if (!requireWebAuth()) return;
+
   appState.recordingAutoStopEnabled = false;
   Serial.println("WEB rec-start: autoStop=OFF");
   if (startRecording()) {
     server.send(200, "text/plain; charset=utf-8", "Aufnahme gestartet");
   } else {
+    appState.recordingAutoStopEnabled = true;
     server.send(500, "text/plain; charset=utf-8", "Aufnahme konnte nicht gestartet werden");
   }
 }
 
 static void handleRecStop() {
+  if (!requireWebAuth()) return;
+
   Serial.println("WEB rec-stop");
   stopRecording();
-  appState.recordingAutoStopEnabled = true;
   Serial.println("WEB rec-stop: autoStop=ON");
   server.send(200, "text/plain; charset=utf-8", "Aufnahme gestoppt");
 }
 
 static void handleRecFile() {
+  if (!requireWebAuth()) return;
+
   String path = getRecordingFilename();
   if (!LittleFS.exists(path)) {
     server.send(404, "text/plain; charset=utf-8", "Keine Aufnahme vorhanden");
@@ -494,10 +544,14 @@ static void handleRecFile() {
 }
 
 static void handleRoot() {
+  if (!requireWebAuth()) return;
+
   server.send(200, "text/html; charset=utf-8", htmlPage());
 }
 
 static void handleAsk() {
+  if (!requireWebAuth()) return;
+
   String text = server.hasArg("text") ? server.arg("text") : server.arg("plain");
   if (text.isEmpty()) {
     server.send(400, "text/plain; charset=utf-8", "Fehler: kein Text");
@@ -583,6 +637,8 @@ static void handleAsk() {
 }
 
 static void handleTtsTest() {
+  if (!requireWebAuth()) return;
+
   String text = server.hasArg("text") ? server.arg("text") : appState.lastHaAnswer;
   if (text.isEmpty() || text == "-") {
     text = "Hallo, dies ist ein Test mit dem eigenen TTS Endpunkt.";
@@ -600,6 +656,8 @@ static void handleTtsTest() {
 }
 
 static void handleTtsPlay() {
+  if (!requireWebAuth()) return;
+
   String text = server.hasArg("text") ? server.arg("text") : appState.lastHaAnswer;
   if (text.isEmpty() || text == "-") {
     text = "Hallo, dies ist ein Test mit dem eigenen TTS Endpunkt.";
@@ -631,6 +689,8 @@ static void handleTtsPlay() {
 }
 
 static void handleMicTest() {
+  if (!requireWebAuth()) return;
+
   if (!initMicI2S()) {
     server.send(500, "text/plain; charset=utf-8", "Fehler: i2s init fail");
     return;
@@ -647,6 +707,8 @@ static void handleMicTest() {
 }
 
 static void handleVuOn() {
+  if (!requireWebAuth()) return;
+
   if (!initMicI2S()) {
     server.send(500, "text/plain; charset=utf-8", "Fehler: i2s init fail");
     return;
@@ -657,6 +719,8 @@ static void handleVuOn() {
 }
 
 static void handleVuOff() {
+  if (!requireWebAuth()) return;
+
   appState.vuMode = false;
   stopMicI2S();
   drawLines("VU aus", WiFi.SSID(), WiFi.localIP().toString(), "warte auf text");
@@ -664,6 +728,8 @@ static void handleVuOff() {
 }
 
 static void handleSpeakerTest() {
+  if (!requireWebAuth()) return;
+
   bool ok = runSpeakerTone(1000, 800);
   drawLines("Speaker-Test", ok ? "Ton gesendet" : "Fehler", appState.lastSpeakerInfo, WiFi.localIP().toString());
 
@@ -672,6 +738,8 @@ static void handleSpeakerTest() {
 }
 
 static void handleApiStatus() {
+  if (!requireWebAuth()) return;
+
   DynamicJsonDocument doc(768);
   doc["ip"] = WiFi.localIP().toString();
   doc["ssid"] = WiFi.SSID();

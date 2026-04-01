@@ -104,6 +104,7 @@ void stopRecording() {
 
   recording = false;
   Serial.printf("REC stop bytes=%u\n", dataBytesWritten);
+  appState.recordingAutoStopEnabled = true;
 
   appState.recordingStartedMs = 0;
   appState.recordingLastSpeechMs = 0;
