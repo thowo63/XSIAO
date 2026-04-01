@@ -46,7 +46,7 @@ base_url="http://${host}:${port}"
 
 echo "Checking ${base_url}/health"
 health="$(curl -fsS "${base_url}/health")"
-if [[ "${health}" != "ok"* ]]; then
+if [[ "${health}" != ok* ]]; then
   echo "Health check failed: ${health}" >&2
   exit 1
 fi
@@ -56,7 +56,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 wav_path="${tmp_dir}/tts.wav"
-encoded_text="$(python -c 'import sys; from urllib.parse import quote; print(quote(sys.argv[1]))' "${text}")"
+encoded_text="$(python3 -c 'import sys; from urllib.parse import quote; print(quote(sys.argv[1]))' "${text}")"
 tts_url="${base_url}/tts?text=${encoded_text}"
 
 echo "Checking ${base_url}/tts"

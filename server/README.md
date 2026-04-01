@@ -70,6 +70,8 @@ Healthcheck script:
 bash server/healthcheck_qwen3_tts.sh --host 127.0.0.1 --port 8001 --text "Hallo Welt"
 ```
 
+The healthcheck helper uses `curl`, `file`, and `python3`.
+
 Before enabling the unit, adjust these paths in the service file:
 
 - `/opt/xiaozhi`
