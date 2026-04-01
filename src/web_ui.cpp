@@ -119,6 +119,14 @@ String htmlPage() {
             <label>TTS Base URL</label><br>
             <input id="cfg_tts_base_url" name="tts_base_url" type="text"><br><br>
 
+            <label>TTS Preset</label><br>
+            <select id="cfg_tts_preset">
+                <option value="qwen3">Qwen3-TTS</option>
+                <option value="legacy">Legacy TTS</option>
+                <option value="custom">Benutzerdefiniert</option>
+            </select>
+            <button type="button" onclick="applyTtsPreset()">Preset anwenden</button><br><br>
+
             <button type="submit">Speichern</button>
             <button type="button" onclick="loadConfig()">Neu laden</button>
             </form>
@@ -233,6 +241,30 @@ String htmlPage() {
         box.textContent = 'Fehler: ' + e;
     }
     }
+
+    function presetUrlFor(name) {
+        if (name === 'qwen3') {
+            return 'http://192.168.1.94:8001/tts?text=';
+        }
+        if (name === 'legacy') {
+            return 'http://192.168.1.94:5001/tts?text=';
+        }
+        return document.getElementById('cfg_tts_base_url').value;
+    }
+
+    function detectTtsPreset(url) {
+        if (url === 'http://192.168.1.94:8001/tts?text=') return 'qwen3';
+        if (url === 'http://192.168.1.94:5001/tts?text=') return 'legacy';
+        return 'custom';
+    }
+
+    function applyTtsPreset() {
+        const preset = document.getElementById('cfg_tts_preset').value;
+        if (preset === 'custom') {
+            return;
+        }
+        document.getElementById('cfg_tts_base_url').value = presetUrlFor(preset);
+    }
     )rawliteral";
 
     html += "document.getElementById('assistantMode').value = '" + String(getAssistantModeName(appState.assistantMode)) + "';\n";
@@ -271,6 +303,7 @@ String htmlPage() {
             document.getElementById('cfg_min_speech_ms').value = cfg.recording_min_speech_ms;
             document.getElementById('cfg_max_ms').value = cfg.recording_max_ms;
             document.getElementById('cfg_tts_base_url').value = cfg.tts_base_url;
+            document.getElementById('cfg_tts_preset').value = detectTtsPreset(cfg.tts_base_url);
 
             box.textContent = 'Config geladen';
         } catch (e) {
