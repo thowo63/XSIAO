@@ -9,6 +9,11 @@ extern AppState appState;
 String processConversationWithHA(const String& text, String& errorOut) {
   errorOut = "";
 
+  if (strlen(HA_TOKEN) == 0) {
+    errorOut = "HA_TOKEN fehlt";
+    return "";
+  }
+
   HTTPClient http;
   String url = String(HA_BASE_URL) + "/api/conversation/process";
 
@@ -42,6 +47,14 @@ String processConversationWithHA(const String& text, String& errorOut) {
   http.end();
 
   if (httpCode != 200) {
+    if (httpCode == 401) {
+      errorOut = "Home Assistant Auth fehlgeschlagen (401). Bitte neuen Long-Lived Access Token erzeugen.";
+      if (resp.length() > 0) {
+        errorOut += " Antwort: " + resp;
+      }
+      return "";
+    }
+
     errorOut = String("HA HTTP ") + httpCode + ": " + resp;
     return "";
   }
