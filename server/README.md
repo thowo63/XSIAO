@@ -29,3 +29,36 @@ Example:
 ```text
 /tts?text=Guten%20Tag&language=German&speaker=Ryan
 ```
+
+## systemd
+
+You can run the adapter as a service with the template in
+[`qwen3-tts.service`](./qwen3-tts.service).
+
+Typical install steps:
+
+```bash
+sudo cp server/qwen3-tts.service /etc/systemd/system/qwen3-tts.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now qwen3-tts.service
+sudo systemctl status qwen3-tts.service
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8001/health
+```
+
+Logs:
+
+```bash
+journalctl -u qwen3-tts -f
+```
+
+Before enabling the unit, adjust these paths in the service file:
+
+- `/opt/xiaozhi`
+- `/opt/qwen3-tts/.venv/bin/python`
+
+If your repo or venv lives elsewhere, replace them with your actual paths.

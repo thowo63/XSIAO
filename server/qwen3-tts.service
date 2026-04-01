@@ -1,0 +1,16 @@
+[Unit]
+Description=Qwen3-TTS HTTP adapter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/xiaozhi
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/default/qwen3-tts
+ExecStart=/opt/qwen3-tts/.venv/bin/python /opt/xiaozhi/server/qwen_tts_server.py --host 0.0.0.0 --port 8001
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
