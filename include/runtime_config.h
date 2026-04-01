@@ -9,6 +9,7 @@ struct RuntimeConfig {
   int recording_earliest_stop_ms;
   int recording_min_speech_ms;
   int recording_max_ms;
+  String tts_base_url;
 };
 
 extern RuntimeConfig runtimeConfig;

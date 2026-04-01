@@ -4,6 +4,8 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
+#include "app_config.h"
+
 RuntimeConfig runtimeConfig;
 
 static const char* CONFIG_PATH = "/config.json";
@@ -15,6 +17,7 @@ void setRuntimeConfigDefaults() {
   runtimeConfig.recording_earliest_stop_ms = 2000;
   runtimeConfig.recording_min_speech_ms = 500;
   runtimeConfig.recording_max_ms = 15000;
+  runtimeConfig.tts_base_url = TTS_BASE_URL;
 }
 
 bool loadRuntimeConfig() {
@@ -34,7 +37,7 @@ bool loadRuntimeConfig() {
     return false;
   }
 
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(1536);
   DeserializationError err = deserializeJson(doc, f);
   f.close();
 
@@ -60,6 +63,9 @@ bool loadRuntimeConfig() {
   runtimeConfig.recording_max_ms =
       doc["recording_max_ms"] | runtimeConfig.recording_max_ms;
 
+  runtimeConfig.tts_base_url =
+      doc["tts_base_url"] | runtimeConfig.tts_base_url;
+
   return true;
 }
 
@@ -73,13 +79,14 @@ bool saveRuntimeConfig() {
     return false;
   }
 
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(1536);
   doc["recording_silence_threshold"] = runtimeConfig.recording_silence_threshold;
   doc["recording_speech_hits_required"] = runtimeConfig.recording_speech_hits_required;
   doc["recording_silence_ms"] = runtimeConfig.recording_silence_ms;
   doc["recording_earliest_stop_ms"] = runtimeConfig.recording_earliest_stop_ms;
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
+  doc["tts_base_url"] = runtimeConfig.tts_base_url;
 
   bool ok = serializeJsonPretty(doc, f) > 0;
   f.close();

@@ -91,6 +91,7 @@ String htmlPage() {
     html += "<p><b>Mikro:</b> " + htmlEscape(appState.lastMicInfo) + "</p>";
     html += "<p><b>Speaker:</b> " + htmlEscape(appState.lastSpeakerInfo) + "</p>";
     html += "<p><b>Mic avg:</b> " + htmlEscape(String(appState.currentMicAvg)) + "</p>";
+    html += "<p><b>TTS base:</b> " + htmlEscape(runtimeConfig.tts_base_url) + "</p>";
     html += "</div>";
     html += R"rawliteral(
         <div class="box">
@@ -114,6 +115,9 @@ String htmlPage() {
 
             <label>Max Recording ms</label><br>
             <input id="cfg_max_ms" name="recording_max_ms" type="text"><br><br>
+
+            <label>TTS Base URL</label><br>
+            <input id="cfg_tts_base_url" name="tts_base_url" type="text"><br><br>
 
             <button type="submit">Speichern</button>
             <button type="button" onclick="loadConfig()">Neu laden</button>
@@ -266,6 +270,7 @@ String htmlPage() {
             document.getElementById('cfg_earliest_ms').value = cfg.recording_earliest_stop_ms;
             document.getElementById('cfg_min_speech_ms').value = cfg.recording_min_speech_ms;
             document.getElementById('cfg_max_ms').value = cfg.recording_max_ms;
+            document.getElementById('cfg_tts_base_url').value = cfg.tts_base_url;
 
             box.textContent = 'Config geladen';
         } catch (e) {
@@ -287,6 +292,7 @@ String htmlPage() {
             body.append('recording_earliest_stop_ms', document.getElementById('cfg_earliest_ms').value);
             body.append('recording_min_speech_ms', document.getElementById('cfg_min_speech_ms').value);
             body.append('recording_max_ms', document.getElementById('cfg_max_ms').value);
+            body.append('tts_base_url', document.getElementById('cfg_tts_base_url').value);
 
             const resp = await fetch('/config-set', {
             method: 'POST',
@@ -375,6 +381,7 @@ static void handleConfigGet() {
   doc["recording_earliest_stop_ms"] = runtimeConfig.recording_earliest_stop_ms;
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
+  doc["tts_base_url"] = runtimeConfig.tts_base_url;
 
   String out;
   serializeJsonPretty(doc, out);
@@ -493,6 +500,9 @@ static void handleConfigSet() {
 
   runtimeConfig.recording_max_ms =
       server.hasArg("recording_max_ms") ? server.arg("recording_max_ms").toInt() : runtimeConfig.recording_max_ms;
+
+  runtimeConfig.tts_base_url =
+      server.hasArg("tts_base_url") ? server.arg("tts_base_url") : runtimeConfig.tts_base_url;
 
   if (!saveRuntimeConfig()) {
     server.send(500, "text/plain; charset=utf-8", "Config konnte nicht gespeichert werden");
@@ -749,6 +759,7 @@ static void handleApiStatus() {
   doc["conversation_id"] = appState.lastConversationId;
   doc["tts_url"] = appState.lastTtsUrl;
   doc["tts_path"] = appState.lastTtsPath;
+  doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["mic"] = appState.lastMicInfo;
   doc["mic_avg"] = appState.currentMicAvg;
   doc["speaker"] = appState.lastSpeakerInfo;

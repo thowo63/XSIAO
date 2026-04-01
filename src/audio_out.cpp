@@ -10,6 +10,7 @@
 #include "app_config.h"
 #include "app_state.h"
 #include "audio_in.h"
+#include "runtime_config.h"
 #include <LittleFS.h>
 
 extern AppState appState;
@@ -419,5 +420,6 @@ static String urlEncode(const String& s) {
 }
 
 String buildTtsUrl(const String& text) {
-  return String(TTS_BASE_URL) + urlEncode(text);
+  String base = runtimeConfig.tts_base_url.length() > 0 ? runtimeConfig.tts_base_url : String(TTS_BASE_URL);
+  return base + urlEncode(text);
 }
