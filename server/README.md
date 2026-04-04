@@ -52,6 +52,9 @@ bash server/install_qwen3_tts.sh \
   --venv-python /opt/qwen3-tts/.venv/bin/python
 ```
 
+If you are already root, the script will run without `sudo`. If `sudo` exists,
+it will use it automatically when needed.
+
 Health check:
 
 ```bash

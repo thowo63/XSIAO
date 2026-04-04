@@ -33,6 +33,17 @@ default_language=""
 default_instruct=""
 skip_defaults_file="false"
 
+run_as_root() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    echo "This script needs root privileges, but sudo is not installed." >&2
+    exit 1
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo-dir)
@@ -109,7 +120,7 @@ fi
 service_path="/etc/systemd/system/${unit_name}.service"
 defaults_path="/etc/default/${unit_name}"
 
-sudo tee "$service_path" >/dev/null <<EOF
+run_as_root tee "$service_path" >/dev/null <<EOF
 [Unit]
 Description=Qwen3-TTS HTTP adapter
 After=network-online.target
@@ -129,7 +140,7 @@ WantedBy=multi-user.target
 EOF
 
 if [[ "$skip_defaults_file" != "true" ]]; then
-  sudo tee "$defaults_path" >/dev/null <<EOF
+  run_as_root tee "$defaults_path" >/dev/null <<EOF
 QWEN_TTS_MODEL_ID=${model_id}
 QWEN_TTS_TASK=${task}
 QWEN_TTS_SPEAKER=${default_speaker}
@@ -138,8 +149,8 @@ QWEN_TTS_INSTRUCT=${default_instruct}
 EOF
 fi
 
-sudo systemctl daemon-reload
-sudo systemctl enable --now "${unit_name}.service"
+run_as_root systemctl daemon-reload
+run_as_root systemctl enable --now "${unit_name}.service"
 
 echo "Installed and started ${unit_name}.service"
 echo "Check status: sudo systemctl status ${unit_name}.service"
