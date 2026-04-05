@@ -10,6 +10,7 @@ struct RuntimeConfig {
   int recording_min_speech_ms;
   int recording_max_ms;
   String tts_base_url;
+  String stt_base_url;
 };
 
 extern RuntimeConfig runtimeConfig;

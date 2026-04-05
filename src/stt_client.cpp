@@ -7,6 +7,7 @@
 
 #include "app_config.h"
 #include "audio_record.h"
+#include "runtime_config.h"
 #include <ArduinoJson.h>
 
 static bool parseHttpUrl(const String& url, String& host, uint16_t& port, String& path) {
@@ -67,7 +68,9 @@ bool transcribeRecordedFile(String& textOut, String& errorOut) {
 
   String host, path;
   uint16_t port;
-  if (!parseHttpUrl(STT_BASE_URL, host, port, path)) {
+  String baseUrl = runtimeConfig.stt_base_url.length() > 0 ? runtimeConfig.stt_base_url : String(STT_BASE_URL);
+
+  if (!parseHttpUrl(baseUrl, host, port, path)) {
     f.close();
     errorOut = "STT URL ungueltig";
     return false;
@@ -161,5 +164,5 @@ bool transcribeRecordedFile(String& textOut, String& errorOut) {
 }
 
 textOut = text;
-return true;
+  return true;
 }

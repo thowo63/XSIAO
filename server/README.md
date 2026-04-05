@@ -1,6 +1,61 @@
-# Qwen3-TTS HTTP Adapter
+# OpenAI Audio Proxy
 
-This project includes a minimal HTTP wrapper for Qwen3-TTS:
+This project includes a minimal HTTP proxy for OpenAI audio endpoints:
+
+- `GET /tts?text=...` returns WAV audio from OpenAI TTS
+- `POST /stt` uploads WAV audio and returns JSON `{ "ok": true, "text": "..." }`
+- `GET /health` returns `ok`
+
+Example:
+
+```bash
+python server/openai_audio_server.py --host 0.0.0.0 --port 8010
+```
+
+Recommended defaults:
+
+- `OPENAI_BASE_URL=https://api.openai.com/v1`
+- `OPENAI_TTS_MODEL=gpt-4o-mini-tts`
+- `OPENAI_TTS_VOICE=alloy`
+- `OPENAI_TTS_RESPONSE_FORMAT=wav`
+- `OPENAI_STT_MODEL=gpt-4o-mini-transcribe`
+- `OPENAI_STT_RESPONSE_FORMAT=text`
+
+The proxy expects `OPENAI_API_KEY` in the environment or in `/etc/default/openai-audio`.
+Use a real OpenAI API key from platform.openai.com, not a ChatGPT web session token.
+
+The ESP32 firmware can call:
+
+```text
+http://<server-ip>:8010/tts?text=Hallo%20Welt
+http://<server-ip>:8010/stt
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8010/health
+```
+
+Install as a service:
+
+```bash
+bash server/install_openai_audio.sh \
+  --repo-dir /opt/xiaozhi \
+  --venv-python /opt/xiaozhi/.venv/bin/python
+```
+
+Healthcheck script:
+
+```bash
+bash server/healthcheck_openai_audio.sh --host 127.0.0.1 --port 8010 --text "Hallo Welt"
+```
+
+The healthcheck helper uses `curl`, `file`, and `python3`.
+
+## Qwen3-TTS HTTP Adapter
+
+This project also includes a minimal HTTP wrapper for Qwen3-TTS:
 
 ```bash
 python server/qwen_tts_server.py --host 0.0.0.0 --port 8001

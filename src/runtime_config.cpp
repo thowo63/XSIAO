@@ -18,6 +18,7 @@ void setRuntimeConfigDefaults() {
   runtimeConfig.recording_min_speech_ms = 500;
   runtimeConfig.recording_max_ms = 15000;
   runtimeConfig.tts_base_url = TTS_BASE_URL;
+  runtimeConfig.stt_base_url = STT_BASE_URL;
 }
 
 bool loadRuntimeConfig() {
@@ -66,6 +67,9 @@ bool loadRuntimeConfig() {
   runtimeConfig.tts_base_url =
       doc["tts_base_url"] | runtimeConfig.tts_base_url;
 
+  runtimeConfig.stt_base_url =
+      doc["stt_base_url"] | runtimeConfig.stt_base_url;
+
   return true;
 }
 
@@ -87,6 +91,7 @@ bool saveRuntimeConfig() {
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
+  doc["stt_base_url"] = runtimeConfig.stt_base_url;
 
   bool ok = serializeJsonPretty(doc, f) > 0;
   f.close();
