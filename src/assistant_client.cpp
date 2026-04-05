@@ -7,6 +7,7 @@
 #include "app_config.h"
 #include "app_state.h"
 #include "ha_client.h"
+#include "runtime_config.h"
 
 extern AppState appState;
 
@@ -14,7 +15,10 @@ static String processOpenAIText(const String& text, String& errorOut) {
   errorOut = "";
 
   HTTPClient http;
-  http.begin(OPENAI_PROXY_URL);
+  String proxyUrl = runtimeConfig.openai_proxy_url.length() > 0
+      ? runtimeConfig.openai_proxy_url
+      : String(OPENAI_PROXY_URL);
+  http.begin(proxyUrl);
   http.addHeader("Content-Type", "application/json");
   http.setConnectTimeout(5000);
   http.setTimeout(60000);

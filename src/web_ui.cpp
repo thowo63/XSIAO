@@ -91,6 +91,7 @@ String htmlPage() {
     html += "<p><b>Mikro:</b> " + htmlEscape(appState.lastMicInfo) + "</p>";
     html += "<p><b>Speaker:</b> " + htmlEscape(appState.lastSpeakerInfo) + "</p>";
     html += "<p><b>Mic avg:</b> " + htmlEscape(String(appState.currentMicAvg)) + "</p>";
+    html += "<p><b>OpenAI Proxy:</b> " + htmlEscape(runtimeConfig.openai_proxy_url) + "</p>";
     html += "<p><b>TTS base:</b> " + htmlEscape(runtimeConfig.tts_base_url) + "</p>";
     html += "<p><b>STT base:</b> " + htmlEscape(runtimeConfig.stt_base_url) + "</p>";
     html += "</div>";
@@ -122,6 +123,9 @@ String htmlPage() {
 
             <label>STT Base URL</label><br>
             <input id="cfg_stt_base_url" name="stt_base_url" type="text"><br><br>
+
+            <label>OpenAI Proxy URL</label><br>
+            <input id="cfg_openai_proxy_url" name="openai_proxy_url" type="text"><br><br>
 
             <label>TTS Preset</label><br>
             <select id="cfg_tts_preset">
@@ -306,6 +310,7 @@ String htmlPage() {
             document.getElementById('cfg_earliest_ms').value = cfg.recording_earliest_stop_ms;
             document.getElementById('cfg_min_speech_ms').value = cfg.recording_min_speech_ms;
             document.getElementById('cfg_max_ms').value = cfg.recording_max_ms;
+            document.getElementById('cfg_openai_proxy_url').value = cfg.openai_proxy_url;
             document.getElementById('cfg_tts_base_url').value = cfg.tts_base_url;
             document.getElementById('cfg_stt_base_url').value = cfg.stt_base_url;
             document.getElementById('cfg_tts_preset').value = detectTtsPreset(cfg.tts_base_url);
@@ -330,6 +335,7 @@ String htmlPage() {
             body.append('recording_earliest_stop_ms', document.getElementById('cfg_earliest_ms').value);
             body.append('recording_min_speech_ms', document.getElementById('cfg_min_speech_ms').value);
             body.append('recording_max_ms', document.getElementById('cfg_max_ms').value);
+            body.append('openai_proxy_url', document.getElementById('cfg_openai_proxy_url').value);
             body.append('tts_base_url', document.getElementById('cfg_tts_base_url').value);
             body.append('stt_base_url', document.getElementById('cfg_stt_base_url').value);
 
@@ -420,6 +426,7 @@ static void handleConfigGet() {
   doc["recording_earliest_stop_ms"] = runtimeConfig.recording_earliest_stop_ms;
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
+  doc["openai_proxy_url"] = runtimeConfig.openai_proxy_url;
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["stt_base_url"] = runtimeConfig.stt_base_url;
 
@@ -540,6 +547,9 @@ static void handleConfigSet() {
 
   runtimeConfig.recording_max_ms =
       server.hasArg("recording_max_ms") ? server.arg("recording_max_ms").toInt() : runtimeConfig.recording_max_ms;
+
+  runtimeConfig.openai_proxy_url =
+      server.hasArg("openai_proxy_url") ? server.arg("openai_proxy_url") : runtimeConfig.openai_proxy_url;
 
   runtimeConfig.tts_base_url =
       server.hasArg("tts_base_url") ? server.arg("tts_base_url") : runtimeConfig.tts_base_url;
@@ -804,6 +814,7 @@ static void handleApiStatus() {
   doc["tts_path"] = appState.lastTtsPath;
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["stt_base_url"] = runtimeConfig.stt_base_url;
+  doc["openai_proxy_url"] = runtimeConfig.openai_proxy_url;
   doc["mic"] = appState.lastMicInfo;
   doc["mic_avg"] = appState.currentMicAvg;
   doc["speaker"] = appState.lastSpeakerInfo;
