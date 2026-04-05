@@ -14,8 +14,6 @@ OpenAI API with a standard API key.
 
 from __future__ import annotations
 
-import cgi
-import io
 import json
 import os
 import ssl
@@ -110,6 +108,64 @@ def build_multipart_body(fields: dict[str, str], file_field_name: str, filename:
     add_line(f"--{boundary}--")
 
     return bytes(body), boundary
+
+
+def parse_content_type_parameter(content_type: str, parameter: str) -> str:
+    for part in content_type.split(";"):
+        piece = part.strip()
+        if "=" not in piece:
+            continue
+        key, value = piece.split("=", 1)
+        if key.strip().lower() == parameter.lower():
+            return value.strip().strip('"')
+    return ""
+
+
+def parse_multipart_form_data(body: bytes, content_type: str) -> dict[str, tuple[str, bytes, str]]:
+    boundary = parse_content_type_parameter(content_type, "boundary")
+    if not boundary:
+        raise RuntimeError("multipart boundary fehlt")
+
+    delimiter = b"--" + boundary.encode("utf-8")
+    chunks = body.split(delimiter)
+    fields: dict[str, tuple[str, bytes, str]] = {}
+
+    for chunk in chunks[1:]:
+        if chunk in (b"", b"--", b"--\r\n"):
+            continue
+        if chunk.startswith(b"--"):
+            break
+
+        part = chunk
+        if part.startswith(b"\r\n"):
+            part = part[2:]
+        if part.endswith(b"\r\n"):
+            part = part[:-2]
+        if part.endswith(b"--"):
+            part = part[:-2]
+
+        header_blob, sep, content = part.partition(b"\r\n\r\n")
+        if not sep:
+            continue
+
+        header_lines = header_blob.decode("utf-8", errors="replace").split("\r\n")
+        headers: dict[str, str] = {}
+        for line in header_lines:
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            headers[key.strip().lower()] = value.strip()
+
+        disp = headers.get("content-disposition", "")
+        name = parse_content_type_parameter(disp, "name")
+        filename = parse_content_type_parameter(disp, "filename")
+        part_content_type = headers.get("content-type", "text/plain")
+
+        if content.endswith(b"\r\n"):
+            content = content[:-2]
+        fields[name] = (filename, content, part_content_type)
+
+    return fields
 
 
 def openai_tts(text: str) -> tuple[bytes, str]:
@@ -221,24 +277,24 @@ class OpenAIAudioHandler(BaseHTTPRequestHandler):
         return raw.decode("utf-8", errors="replace")
 
     def parse_multipart(self) -> tuple[bytes, str, str]:
-        env = {
-            "REQUEST_METHOD": "POST",
-            "CONTENT_TYPE": self.headers.get("Content-Type", ""),
-            "CONTENT_LENGTH": self.headers.get("Content-Length", "0"),
-        }
-        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ=env, keep_blank_values=True)
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if length <= 0:
+            raise RuntimeError("Multipart body fehlt")
+
+        body = self.rfile.read(length)
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            raise RuntimeError("Ungueltiger STT Content-Type")
+
+        form = parse_multipart_form_data(body, content_type)
         if "audio" not in form:
             raise RuntimeError("audio-Feld fehlt")
 
-        audio_field = form["audio"]
-        if getattr(audio_field, "file", None) is None:
-            raise RuntimeError("audio-Feld ist kein File-Upload")
-
-        audio_bytes = audio_field.file.read()
-        filename = getattr(audio_field, "filename", "") or "record.wav"
+        filename, audio_bytes, _audio_content_type = form["audio"]
+        filename = filename or "record.wav"
         language = ""
         if "language" in form:
-            language = form.getfirst("language", "")
+            language = form["language"][1].decode("utf-8", errors="replace")
         return audio_bytes, filename, language
 
     def handle_health(self) -> None:
