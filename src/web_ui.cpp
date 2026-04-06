@@ -92,6 +92,7 @@ String htmlPage() {
     html += "<p><b>Speaker:</b> " + htmlEscape(appState.lastSpeakerInfo) + "</p>";
     html += "<p><b>Mic avg:</b> " + htmlEscape(String(appState.currentMicAvg)) + "</p>";
     html += "<p><b>OpenAI Proxy:</b> " + htmlEscape(runtimeConfig.openai_proxy_url) + "</p>";
+    html += "<p><b>TTS Voice:</b> " + htmlEscape(runtimeConfig.tts_voice) + "</p>";
     html += "<p><b>TTS base:</b> " + htmlEscape(runtimeConfig.tts_base_url) + "</p>";
     html += "<p><b>STT base:</b> " + htmlEscape(runtimeConfig.stt_base_url) + "</p>";
     html += "</div>";
@@ -126,6 +127,22 @@ String htmlPage() {
 
             <label>OpenAI Proxy URL</label><br>
             <input id="cfg_openai_proxy_url" name="openai_proxy_url" type="text"><br><br>
+
+            <label>TTS Voice</label><br>
+            <select id="cfg_tts_voice" name="tts_voice">
+                <option value="alloy">alloy</option>
+                <option value="ash">ash</option>
+                <option value="ballad">ballad</option>
+                <option value="coral">coral</option>
+                <option value="echo">echo</option>
+                <option value="fable">fable</option>
+                <option value="marin">marin</option>
+                <option value="nova">nova</option>
+                <option value="onyx">onyx</option>
+                <option value="sage">sage</option>
+                <option value="shimmer">shimmer</option>
+                <option value="verse">verse</option>
+            </select><br><br>
 
             <label>TTS Preset</label><br>
             <select id="cfg_tts_preset">
@@ -311,6 +328,7 @@ String htmlPage() {
             document.getElementById('cfg_min_speech_ms').value = cfg.recording_min_speech_ms;
             document.getElementById('cfg_max_ms').value = cfg.recording_max_ms;
             document.getElementById('cfg_openai_proxy_url').value = cfg.openai_proxy_url;
+            document.getElementById('cfg_tts_voice').value = cfg.tts_voice;
             document.getElementById('cfg_tts_base_url').value = cfg.tts_base_url;
             document.getElementById('cfg_stt_base_url').value = cfg.stt_base_url;
             document.getElementById('cfg_tts_preset').value = detectTtsPreset(cfg.tts_base_url);
@@ -336,6 +354,7 @@ String htmlPage() {
             body.append('recording_min_speech_ms', document.getElementById('cfg_min_speech_ms').value);
             body.append('recording_max_ms', document.getElementById('cfg_max_ms').value);
             body.append('openai_proxy_url', document.getElementById('cfg_openai_proxy_url').value);
+            body.append('tts_voice', document.getElementById('cfg_tts_voice').value);
             body.append('tts_base_url', document.getElementById('cfg_tts_base_url').value);
             body.append('stt_base_url', document.getElementById('cfg_stt_base_url').value);
 
@@ -427,6 +446,7 @@ static void handleConfigGet() {
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
   doc["openai_proxy_url"] = runtimeConfig.openai_proxy_url;
+  doc["tts_voice"] = runtimeConfig.tts_voice;
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["stt_base_url"] = runtimeConfig.stt_base_url;
 
@@ -550,6 +570,9 @@ static void handleConfigSet() {
 
   runtimeConfig.openai_proxy_url =
       server.hasArg("openai_proxy_url") ? server.arg("openai_proxy_url") : runtimeConfig.openai_proxy_url;
+
+  runtimeConfig.tts_voice =
+      server.hasArg("tts_voice") ? server.arg("tts_voice") : runtimeConfig.tts_voice;
 
   runtimeConfig.tts_base_url =
       server.hasArg("tts_base_url") ? server.arg("tts_base_url") : runtimeConfig.tts_base_url;
@@ -815,6 +838,7 @@ static void handleApiStatus() {
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["stt_base_url"] = runtimeConfig.stt_base_url;
   doc["openai_proxy_url"] = runtimeConfig.openai_proxy_url;
+  doc["tts_voice"] = runtimeConfig.tts_voice;
   doc["mic"] = appState.lastMicInfo;
   doc["mic_avg"] = appState.currentMicAvg;
   doc["speaker"] = appState.lastSpeakerInfo;

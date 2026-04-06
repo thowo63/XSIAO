@@ -10,6 +10,7 @@ struct RuntimeConfig {
   int recording_min_speech_ms;
   int recording_max_ms;
   String openai_proxy_url;
+  String tts_voice;
   String tts_base_url;
   String stt_base_url;
 };

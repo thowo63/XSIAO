@@ -18,6 +18,7 @@ void setRuntimeConfigDefaults() {
   runtimeConfig.recording_min_speech_ms = 500;
   runtimeConfig.recording_max_ms = 15000;
   runtimeConfig.openai_proxy_url = OPENAI_PROXY_URL;
+  runtimeConfig.tts_voice = "marin";
   runtimeConfig.tts_base_url = TTS_BASE_URL;
   runtimeConfig.stt_base_url = STT_BASE_URL;
 }
@@ -39,7 +40,7 @@ bool loadRuntimeConfig() {
     return false;
   }
 
-  DynamicJsonDocument doc(1536);
+  DynamicJsonDocument doc(2048);
   DeserializationError err = deserializeJson(doc, f);
   f.close();
 
@@ -68,6 +69,9 @@ bool loadRuntimeConfig() {
   runtimeConfig.openai_proxy_url =
       doc["openai_proxy_url"] | runtimeConfig.openai_proxy_url;
 
+  runtimeConfig.tts_voice =
+      doc["tts_voice"] | runtimeConfig.tts_voice;
+
   runtimeConfig.tts_base_url =
       doc["tts_base_url"] | runtimeConfig.tts_base_url;
 
@@ -87,7 +91,7 @@ bool saveRuntimeConfig() {
     return false;
   }
 
-  DynamicJsonDocument doc(1536);
+  DynamicJsonDocument doc(2048);
   doc["recording_silence_threshold"] = runtimeConfig.recording_silence_threshold;
   doc["recording_speech_hits_required"] = runtimeConfig.recording_speech_hits_required;
   doc["recording_silence_ms"] = runtimeConfig.recording_silence_ms;
@@ -95,6 +99,7 @@ bool saveRuntimeConfig() {
   doc["recording_min_speech_ms"] = runtimeConfig.recording_min_speech_ms;
   doc["recording_max_ms"] = runtimeConfig.recording_max_ms;
   doc["openai_proxy_url"] = runtimeConfig.openai_proxy_url;
+  doc["tts_voice"] = runtimeConfig.tts_voice;
   doc["tts_base_url"] = runtimeConfig.tts_base_url;
   doc["stt_base_url"] = runtimeConfig.stt_base_url;
 

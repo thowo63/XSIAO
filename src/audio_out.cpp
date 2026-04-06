@@ -421,5 +421,11 @@ static String urlEncode(const String& s) {
 
 String buildTtsUrl(const String& text) {
   String base = runtimeConfig.tts_base_url.length() > 0 ? runtimeConfig.tts_base_url : String(TTS_BASE_URL);
-  return base + urlEncode(text);
+  String url = base + urlEncode(text);
+
+  if (runtimeConfig.tts_voice.length() > 0) {
+    url += "&voice=" + urlEncode(runtimeConfig.tts_voice);
+  }
+
+  return url;
 }

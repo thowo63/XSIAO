@@ -168,16 +168,18 @@ def parse_multipart_form_data(body: bytes, content_type: str) -> dict[str, tuple
     return fields
 
 
-def openai_tts(text: str) -> tuple[bytes, str]:
+def openai_tts(text: str, voice: str = "") -> tuple[bytes, str]:
     base_url = normalized_base_url()
     url = f"{base_url}/audio/speech"
     response_format = env("OPENAI_TTS_RESPONSE_FORMAT", DEFAULT_TTS_FORMAT)
     payload = {
         "model": env("OPENAI_TTS_MODEL", DEFAULT_TTS_MODEL),
-        "voice": env("OPENAI_TTS_VOICE", DEFAULT_TTS_VOICE),
         "response_format": response_format,
         "input": text,
     }
+
+    selected_voice = voice.strip() or env("OPENAI_TTS_VOICE", DEFAULT_TTS_VOICE)
+    payload["voice"] = selected_voice
 
     instructions = os.environ.get("OPENAI_TTS_INSTRUCTIONS", "").strip()
     if instructions:
@@ -306,12 +308,13 @@ class OpenAIAudioHandler(BaseHTTPRequestHandler):
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
             text = params.get("text", [""])[0].strip()
+            voice = params.get("voice", [""])[0].strip()
             if not text and self.command == "POST":
                 text = self.read_text_body().strip()
             if not text:
                 raise RuntimeError("text fehlt")
 
-            audio_bytes, content_type = openai_tts(text)
+            audio_bytes, content_type = openai_tts(text, voice=voice)
             self.send_binary(HTTPStatus.OK, audio_bytes, content_type if content_type != "application/json" else "audio/wav")
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
